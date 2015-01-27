@@ -185,6 +185,19 @@
                     continue;
                 }
             }
+            //check if bullet hit player
+            if(Intersect(temp2.x, temp2.y, temp2.width, temp2.height, player.x, player.y, 22,16))
+            {
+                console.log("bullet hit player");
+                display.ctx.fillStyle = "white";
+                display.ctx.font = "95px Lucida Console";
+                display.ctx.fillText("You lose!", 25, 250);
+                display.ctx.font = "60px Lucida Console";
+                display.ctx.fillText("Score: ", 60, 400);
+                display.ctx.fillText(score,350, 400);
+                bullets.splice(i3,1);
+                i3--;
+            }
 
             //check if bullet hit alien
             for (var j = 0, l2 = aliens.length; j < l2; j++)
@@ -240,36 +253,59 @@
             for(var i2=0; i2 < aliens.length; i2++)
             {
                 var temp3 = aliens[i2];
-                if(Intersect(al.x,al.y,al.w,100, temp3.x, temp3.y, temp3.w, temp3.h))
+                if(Intersect(al.x,al.y,al.w,al.h+100, temp3.x, temp3.y, temp3.w, temp3.h)) {
                     al = temp3;
+                }
             }
             //create the bullet
-            bullets.push(new Bullet(al.x, al.w *.5, al.y + al.h, 4,2,4, "#FF0000"));
+            bullets.push(new Bullet(al.x, al.y +al.h +15, 4,2,4, "#FFFFFF"));
         }
         //update aliens based on current movement variable
-        if(frame%levelFrame == 0)
-        {
-            spriteFrame = (spriteFrame +1) % 2;
+        if(frame%levelFrame == 0) {
+            spriteFrame = (spriteFrame + 1) % 2;
             var max = 0, min = display.width;
-            for(var i4 = 0; i4 < aliens.length; i4++)
-            {
+            for (var i4 = 0; i4 < aliens.length; i4++) {
                 var temp = aliens[i4];
-                temp.x += 30*direction;
-                max = Math.max(max, temp.x+temp.w);
+                temp.x += 30 * direction;
+                max = Math.max(max, temp.x + temp.w);
                 min = Math.min(min, temp.x);
             }
             //check if the aliens have hit the edge and should move down
-            if(max > display.width -15 || min < 15)
-            {
+            if (max > display.width - 15 || min < 15) {
                 direction *= -1;
-                for(var i5 =0; i5 < aliens.length; i5++)
-                {
-                    aliens[i5].x += 30*direction;
+                for (var i5 = 0; i5 < aliens.length; i5++) {
+                    aliens[i5].x += 30 * direction;
                     aliens[i5].y += 30;
+                    //check if aliens have reached arches, you lose
+
+                }
+            }
+
+            for (var t = 0; t < aliens.length; t++) {
+                var tempAl = aliens[t];
+                if (Intersect(tempAl.x, tempAl.y, tempAl.w, tempAl.h, arches.x, arches.y, arches.w, arches.h)) {
+                    display.ctx.fillStyle = "white";
+                    display.ctx.font = "95px Lucida Console";
+                    display.ctx.fillText("You lose!", 25, 250);
+                    display.ctx.font = "60px Lucida Console";
+                    display.ctx.fillText("Score: ", 60, 400);
+                    display.ctx.fillText(score, 350, 400);
                 }
             }
 
         }
+            if (score == 10) {
+                console.log("win!");
+
+                display.ctx.fillStyle = "white";
+                display.ctx.font = "95px Lucida Console";
+                display.ctx.fillText("You win!", 25, 250);
+                display.ctx.font = "60px Lucida Console";
+                display.ctx.fillText("Score: ", 60, 400);
+                display.ctx.fillText(score, 350, 400);
+
+
+            }
 
 
     }
@@ -293,10 +329,23 @@
 
         display.ctx.drawImage(arches.canvas, 0, arches.y);
         display.drawSprite(player.sprite, player.x, player.y);
-        display.ctx.strokeStyle = "white";
-        display.ctx.font = "20px Helvetica";
-        display.ctx.strokeText("Score: ", 10,25);
-        display.ctx.strokeText(score,100,25);
+        display.ctx.fillStyle = "white";
+        display.ctx.font = "20px Lucida Console";
+        display.ctx.fillText("Score: ", 10,25);
+        display.ctx.fillText(score,100,25);
+
+        if (aliens.length == 0 || score == 500) {
+            console.log("win!");
+
+            display.ctx.fillStyle = "white";
+            display.ctx.font = "95px Lucida Console";
+            display.ctx.fillText("You win!", 25, 250);
+            display.ctx.font = "60px Lucida Console";
+            display.ctx.fillText("Score: ", 60, 400);
+            display.ctx.fillText(score, 350, 400);
+
+
+        }
 
     }
 main();

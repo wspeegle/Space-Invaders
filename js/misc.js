@@ -98,7 +98,10 @@ InputHandler.prototype.isPressed = function(code) {
 //Check if there is an intersection
 function Intersect(ax, ay, aw, ah, bx, by, bw, bh)
 {
-    return ax < bx+bw && bx < ax+aw && ay < by+bh && by < ay+ah;
+
+    if( ax < bx+bw && bx < ax+aw && ay < by+bh && by < ay+ah)
+        return true;
+    return false;
 }
 
 
