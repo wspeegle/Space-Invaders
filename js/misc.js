@@ -96,6 +96,7 @@ InputHandler.prototype.isPressed = function(code) {
 };
 
 //Check if there is an intersection
+//This function is used for the collision detection between pixels
 function Intersect(ax, ay, aw, ah, bx, by, bw, bh)
 {
 
