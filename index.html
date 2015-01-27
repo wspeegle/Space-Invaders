@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Project 1</title>
+    <script src = "js/misc.js"></script>
+    <style>
+        canvas{
+            background-color: #000;
+            display: block;
+            position: absolute;
+            margin: auto;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+    </style>
+
+
+</head>
+<body>
+
+<script>
+    //game vars
+    var display, input, frame, spriteFrame, levelFrame;
+    var alienSprite, playerSprite, archSprite;
+    var aliens, direction, player, bullets, arches, score;
+
+
+    function main()
+    {
+        display = new Screen(504,600);
+        input = new InputHandler();
+
+        var img = new Image();
+        img.addEventListener("load", function()
+        {
+            alienSprite =
+                    [
+                    [new Sprite(this,0,0,22,16), new Sprite(this,0,16,22,16)],
+                    [new Sprite(this,22,0,16,16), new Sprite(this,22,16,16,16)],
+                    [new Sprite(this,38,0,24,16), new Sprite(this,38,16,24,16)]
+                    ];
+
+            playerSprite = new Sprite(this, 62, 0, 22, 16);
+            archSprite = new Sprite(this, 84, 8, 36, 24);
+
+            init();
+            run();
+        });
+        img.src = "images/invaders.png";
+    }
+
+    //init
+    function init()
+    {
+        frame = 0;
+        spriteFrame = 0;
+        levelFrame = 60;
+        score = 0;
+
+        direction = 1;
+
+        //create player
+        player = {
+        sprite: playerSprite, x: (display.width - playerSprite.w) /2, y: display.height - (30 + playerSprite.h)
+        };
+
+        //create bullet array...obviously empty at start
+        bullets = [];
+
+        //create the arches and canvas
+        arches = {
+            //canvas: null, ctx: null,
+            y: player.y - (30 + archSprite.h),
+            h: archSprite.h,
+
+            init: function()
+            {
+                this.canvas = document.createElement("canvas");
+                this.canvas.width = display.width;
+                this.canvas.height = this.h;
+                this.ctx = this.canvas.getContext("2d");
+                for(var i = 0; i < 4 ; i++)
+                {
+                    this.ctx.drawImage(archSprite.img, archSprite.x, archSprite.y, archSprite.w, archSprite.h, 68+111*i, 0, archSprite.w, archSprite.h);
+                }
+            },
+            //Damage the city
+            generateDamage: function(x,y)
+            {
+                x = Math.floor(x/2) *2;
+                y = Math.floor(y/2) *2;
+                this.ctx.clearRect(x-2,y-2,4,4);
+                this.ctx.clearRect(x+2, y-4, 2, 4);
+                this.ctx.clearRect(x+4, y, 2, 2);
+                this.ctx.clearRect(x+2, y+2, 2, 2);
+                this.ctx.clearRect(x-4, y+2, 2, 2);
+                this.ctx.clearRect(x-6, y, 2, 2);
+                this.ctx.clearRect(x-4, y-4, 2, 2);
+                this.ctx.clearRect(x-2, y-6, 2, 2);
+            },
+
+            //check if pixel is hit
+            hits: function(x,y)
+            {
+                y -= this.y;
+                var data = this.ctx.getImageData(x,y,1,1);
+                if(data.data[3] !== 0)
+                {
+                    this.generateDamage(x,y);
+                    return true;
+                }
+                return false;
+            }
+        };
+        //initiate the arches
+        arches.init();
+
+        //create the alien array
+        aliens = [];
+        var rows = [1,0,0,2,2];
+        for(var i =0; i < rows.length; i++)
+        {
+            for(var j = 0; j<10;j++)
+            {
+                var a = rows[i];
+                aliens.push({
+                    sprite:alienSprite[a],
+                    x: 30 + j*30 + [0,4,0][a],
+                    y: 30 + i*30,
+                    w: alienSprite[a][0].w,
+                    h: alienSprite[a][0].h
+                })
+            }
+        }
+    }
+
+    //loop function for drawing and updating
+    function run()
+    {
+            var loop = function()
+            {
+                update();
+                draw();
+                window.requestAnimationFrame(loop);
+            };
+        window.requestAnimationFrame(loop);
+    }
+
+    //update function
+    function update()
+    {
+        frame++;
+        //update position
+        if(input.isDown(37))
+            player.x -=4;
+        if(input.isDown(39))
+            player.x +=4;
+        if(input.isPressed(32))
+            bullets.push(new Bullet(player.x +10, player.y, -8, 2, 6, "#FF0000"));
+        //bind player to canvas
+        player.x = Math.max(Math.min(player.x, display.width - (30+playerSprite.w)),30);
+
+        //update all bullets
+        for(var i3 = 0, len = bullets.length; i3 < len; i3++) {
+            var temp2 = bullets[i3];
+            temp2.update();
+            //destroy bullet outside of canvas area
+            if (temp2.y + temp2.height < 0 || temp2.y > display.height) {
+                bullets.splice(i3, 1);
+                i3--;
+                len--;
+                continue;
+            }
+
+            //check if bullet hits an arch
+            var ah = temp2.height * .5;
+            if (arches.y < temp2.y + ah && temp2.y + ah < arches.y + arches.h) {
+                if (arches.hits(temp2.x, temp2.y + ah)) {
+                    bullets.splice(i3, 1);
+                    i3--;
+                    len--;
+                    continue;
+                }
+            }
+
+            //check if bullet hit alien
+            for (var j = 0, l2 = aliens.length; j < l2; j++)
+            {
+                var a = aliens[j];
+                if(Intersect(temp2.x, temp2.y, temp2.width, temp2.height, a.x, a.y, a.w, a.h))
+                {
+                    aliens.splice(j,1);
+                    j--;
+                    l2--;
+                    bullets.splice(i3,1);
+                    i3--;
+                    len--;
+                    score += 10;
+
+                    //speed up aliens since we lost some
+                    switch(l2)
+                    {
+                        case 30:
+                        {
+                            //starting case
+                            levelFrame = 40;
+                            break;
+                        }
+                        case 10:
+                        {
+                            levelFrame = 20;
+                            break;
+                        }
+                        case 5:
+                        {
+                            levelFrame = 15;
+                            break;
+                        }
+                        case 1:
+                        {
+                            levelFrame = 5;
+                            break;
+                        }
+
+                    }
+
+                }
+
+            }
+        }
+
+        //make aliens randomly shoot
+        if(Math.random() < 0.03 && aliens.length >0)
+        {
+            var al = aliens[Math.round(Math.random() * (aliens.length -1))]; //randomly pick an alien to shoot from
+            //be sure this alien is in the front line so no friendly fire
+            for(var i2=0; i2 < aliens.length; i2++)
+            {
+                var temp3 = aliens[i2];
+                if(Intersect(al.x,al.y,al.w,100, temp3.x, temp3.y, temp3.w, temp3.h))
+                    al = temp3;
+            }
+            //create the bullet
+            bullets.push(new Bullet(al.x, al.w *.5, al.y + al.h, 4,2,4, "#FF0000"));
+        }
+        //update aliens based on current movement variable
+        if(frame%levelFrame == 0)
+        {
+            spriteFrame = (spriteFrame +1) % 2;
+            var max = 0, min = display.width;
+            for(var i4 = 0; i4 < aliens.length; i4++)
+            {
+                var temp = aliens[i4];
+                temp.x += 30*direction;
+                max = Math.max(max, temp.x+temp.w);
+                min = Math.min(min, temp.x);
+            }
+            //check if the aliens have hit the edge and should move down
+            if(max > display.width -15 || min < 15)
+            {
+                direction *= -1;
+                for(var i5 =0; i5 < aliens.length; i5++)
+                {
+                    aliens[i5].x += 30*direction;
+                    aliens[i5].y += 30;
+                }
+            }
+
+        }
+
+
+    }
+
+
+    //draw to canvas
+    function draw()
+    {
+        display.clear();
+        for(var i6=0; i6<aliens.length; i6++)
+        {
+            var temp = aliens[i6];
+            display.drawSprite(temp.sprite[spriteFrame], temp.x, temp.y);
+        }
+        display.ctx.save();
+        for(var i7=0; i7 < bullets.length; i7++)
+        {
+            display.drawBullet(bullets[i7]);
+        }
+        display.ctx.restore();
+
+        display.ctx.drawImage(arches.canvas, 0, arches.y);
+        display.drawSprite(player.sprite, player.x, player.y);
+        display.ctx.strokeStyle = "white";
+        display.ctx.font = "20px Helvetica";
+        display.ctx.strokeText("Score: ", 10,25);
+        display.ctx.strokeText(score,100,25);
+
+    }
+main();
+
+</script>
+</body>
+</html>
