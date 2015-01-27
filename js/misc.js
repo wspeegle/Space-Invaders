@@ -104,5 +104,3 @@ function Collision(ax, ay, aw, ah, bx, by, bw, bh)
         return true;
     return false;
 }
-
-

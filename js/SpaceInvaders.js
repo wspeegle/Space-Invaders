@@ -2,7 +2,8 @@
 var display, input, frame, spriteFrame, moveSpeed;
 var alienSprite, playerSprite, archSprite;
 var aliens, direction, player, bullets, arches, score;
-
+var loadImg = new Image();
+loadImg.src = "images/invaderLoad.jpg";
 
 function main()
 {
@@ -34,7 +35,7 @@ function init()
 {
     frame = 0;
     spriteFrame = 0;
-    moveSpeed = 5;
+    moveSpeed = 60;
     score = 0;
 
     direction = 1;
@@ -118,6 +119,16 @@ function init()
 //loop function for drawing and updating
 function run()
 {
+    var load = function()
+    {
+        if(!input.isPressed(32))
+        {
+            loading();
+            window.requestAnimationFrame(load);
+        }
+        else
+        window.requestAnimationFrame(loop);
+    };
     var loop = function()
     {
         update();
@@ -125,7 +136,25 @@ function run()
         if(!end())
         window.requestAnimationFrame(loop);
     };
-    window.requestAnimationFrame(loop);
+    window.requestAnimationFrame(load);
+}
+
+function loading()
+{
+
+
+    display.ctx.drawImage(loadImg, 96,10);
+    console.log("loading");
+    display.ctx.fillStyle = "white";
+    display.ctx.font = "20px Courier New";
+    display.ctx.fillText("Press Space to start!", 125, 250);
+    display.ctx.fillText("Controls:", 50, 300);
+    display.ctx.fillText("Press spacebar to shoot", 50, 320);
+    display.ctx.fillText("Press the left and right", 50, 340);
+    display.ctx.fillText("arrow keys to move", 50, 360);
+    display.ctx.fillText("Kill all the aliens before", 50, 400);
+    display.ctx.fillText("they reach you to win!", 50, 420);
+
 }
 
 //update function
@@ -168,9 +197,9 @@ function update()
         if(Collision(temp2.x, temp2.y, temp2.width, temp2.height, player.x, player.y, 22,16))
         {
             display.ctx.fillStyle = "white";
-            display.ctx.font = "95px Lucida Console";
+            display.ctx.font = "95px Courier New";
             display.ctx.fillText("You lose!", 25, 250);
-            display.ctx.font = "60px Lucida Console";
+            display.ctx.font = "60px Courier New";
             display.ctx.fillText("Score: ", 60, 400);
             display.ctx.fillText(score,350, 400);
             bullets.splice(i3,1);
@@ -228,7 +257,7 @@ function update()
     }
 
     //make aliens randomly shoot
-    if(Math.random() < 0.0000003 && aliens.length >0)
+    if(Math.random() < 0.03 && aliens.length >0)
     {
         var al = aliens[Math.round(Math.random() * (aliens.length -1))]; //randomly pick an alien to shoot from
         //be sure this alien is in the front line so no friendly fire
@@ -272,9 +301,9 @@ function update()
             var tempAl = aliens[t];
             if (Collision(tempAl.x, tempAl.y, tempAl.w, tempAl.h, arches.x, arches.y, 36, 24)) {
                 display.ctx.fillStyle = "white";
-                display.ctx.font = "95px Lucida Console";
+                display.ctx.font = "95px Courier New";
                 display.ctx.fillText("You lose!", 25, 250);
-                display.ctx.font = "60px Lucida Console";
+                display.ctx.font = "60px Courier New";
                 display.ctx.fillText("Score: ", 60, 400);
                 display.ctx.fillText(score, 350, 400);
             }
@@ -303,65 +332,43 @@ function draw()
     display.ctx.drawImage(arches.canvas, 0, arches.y);
     display.drawSprite(player.sprite, player.x, player.y);
     display.ctx.fillStyle = "white";
-    display.ctx.font = "20px Impact";
+    display.ctx.font = "20px Courier New";
     display.ctx.fillText("Score: ", 10,25);
     display.ctx.fillText(score,100,25);
-    //Check win conditions - either you kill all the aliens (score = 500)
-    //or something tragic happened and an alien died to friendly fire, check the alien array
-    //if (aliens.length == 0 || score == 500) {
-    //    display.ctx.fillStyle = "white";
-    //    display.ctx.font = "95px Lucida Console";
-    //    display.ctx.fillText("You win!", 25, 250);
-    //    display.ctx.font = "60px Lucida Console";
-    //    display.ctx.fillText("Score: ", 60, 400);
-    //    display.ctx.fillText(score, 350, 400);
-    //}
-//        for (var t = 0; t < aliens.length; t++) {
-//            var tempAl = aliens[t];
-//            if (tempAl.y > arches.y) {
-//                display.ctx.fillStyle = "white";
-//                display.ctx.font = "95px Lucida Console";
-//                display.ctx.fillText("You lose!", 25, 250);
-//                display.ctx.font = "60px Lucida Console";
-//                display.ctx.fillText("Score: ", 60, 400);
-//                display.ctx.fillText(score, 350, 400);
-//                end();
-//            }
-//        }
 }
+
+//This function checks 2 of the 3 win conditions
+//Bullet collision is checked in the update function
 function end()
 {
-
-
     //Check to see if aliens have reached the arches
     //If so, you lose
     for (var t = 0; t < aliens.length; t++) {
         var tempAl = aliens[t];
         if (tempAl.y >= arches.y) {
             display.ctx.fillStyle = "white";
-            display.ctx.font = "95px Lucida Console";
+            display.ctx.font = "95px Courier New";
             display.ctx.fillText("You lose!", 25, 250);
-            display.ctx.font = "60px Lucida Console";
+            display.ctx.font = "60px Courier New";
             display.ctx.fillText("Score: ", 60, 400);
             display.ctx.fillText(score, 350, 400);
             return true;
         }
     }
+    //Check to see if you have won
+    //Either you got the max score (500)
+    //Or somehow the aliens have died to friendly fire
+    //If FF is the case we must check to see if the array of aliens is empty
     if (aliens.length == 0 || score == 500) {
         display.ctx.fillStyle = "white";
-        display.ctx.font = "95px Lucida Console";
+        display.ctx.font = "95px Courier New";
         display.ctx.fillText("You win!", 25, 250);
-        display.ctx.font = "60px Lucida Console";
+        display.ctx.font = "60px Courier New";
         display.ctx.fillText("Score: ", 60, 400);
         display.ctx.fillText(score, 350, 400);
         return true;
     }
     return false;
-
-
 }
 
 main();
-/**
- * Created by William on 1/27/2015.
- */
